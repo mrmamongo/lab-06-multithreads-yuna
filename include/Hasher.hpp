@@ -19,18 +19,22 @@
 #include <boost/log/sources/record_ostream.hpp>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
-
-
-
 namespace logging = boost::log;
 namespace src = boost::log::sources;
 namespace sinks = boost::log::sinks;
 namespace keywords = boost::log::keywords;
 
-typedef src::severity_logger< logging::trivial::severity_level > logger;
+typedef src::severity_logger<logging::trivial::severity_level> logger;
+
+namespace Hasher {
 
 
-[[noreturn]] void encode(
-    std::vector<json>& CorrectValues, std::chrono::time_point< std::chrono::system_clock > & start);
+   void initiate();
+   void sigHandler(int signum);
+
+   void startHashing();
+  [[noreturn]] void encode(
+      std::chrono::time_point<std::chrono::system_clock>& start);
+}
 
 #endif // INCLUDE_HEADER_HPP_

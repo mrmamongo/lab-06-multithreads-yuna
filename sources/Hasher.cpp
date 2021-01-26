@@ -1,11 +1,83 @@
 // Copyright 2020 Your Name <your_email>
 #include <Hasher.hpp>
 
+
 std::mutex mutie;
 
+namespace Hasher {
+
+std::vector<json> correctValues;
+
+void startHashing(){
+  Hasher::initiate();
+  logging::add_common_attributes();
+
+  src::severity_logger<logging::trivial::severity_level> lg;
+
+  size_t threadsCount = boost::thread::hardware_concurrency();
+
+  std::chrono::time_point start = std::chrono::high_resolution_clock::now();
+  for (size_t i = 0; i < threadsCount; ++i) {
+    auto futures =
+        std::async(std::launch::async, [&start]{
+          Hasher::encode( start);
+        });
+  }
+}
+
+void sigHandler(int signum) {
+  json output;
+  const std::string fileName = "jsonLog/log.json";
+  const std::string fieldName = "Correct Values";
+  std::ifstream fileIn(fileName);
+
+  if (fileIn) {
+    fileIn >> output;
+    std::cout << "Previous values:\n" << output.dump() << "\n";
+  }
+  fileIn.close();
+  std::remove(fileName.c_str());
+
+  if (Hasher::correctValues.empty()) {
+    std::cout << "There are no correct values! Other ones will be written to logs dir\n";
+  } else {
+    for (auto&& value : Hasher::correctValues) {
+      output[fieldName].emplace_back(value);
+    }
+  }
+
+  std::ofstream outFile(fileName);
+
+  if (!outFile) {
+    std::cout << "Json Log file not found, creating.....\n";
+    outFile.open(fileName, std::ios::out);
+  }
+  outFile << output;
+  outFile.close();
+
+  std::cout << "\nRight values:\n";
+  for (auto& correctValue : Hasher::correctValues) {
+    std::cout << correctValue << '\n';
+  }
+
+  std::cout << "\nprogram executed with code " << signum << "\n";
+  exit(signum);
+}
+
+void initiate() {
+  logging::add_file_log(
+      keywords::file_name = "logs/log_%5N.log",
+      keywords::rotation_size = 10 * 1024 * 1024,
+      keywords::time_based_rotation =
+          sinks::file::rotation_at_time_point(0, 0, 0),
+      keywords::format = "[%TimeStamp%][%Severity%][%ThreadID%]: %Message%");
+  // sink->set_filter(logging::trivial::severity >= logging::trivial::info);
+
+  srand(time(nullptr));
+}
+
 [[noreturn]] void encode(
-    std::vector<json>& CorrectValues, std::chrono::time_point<std::chrono::system_clock>& start
-    ) {
+    std::chrono::time_point<std::chrono::system_clock>& start) {
   src::severity_logger<logging::trivial::severity_level> lg;
   while (true) {
     const std::string hashEnd = "0000";
@@ -14,7 +86,7 @@ std::mutex mutie;
 
     mutie.lock();
     auto end = std::chrono::system_clock::now();
-    auto timestamp = (std::chrono::nanoseconds (end - start).count());
+    auto timestamp = (std::chrono::nanoseconds(end - start).count());
     start = end;
     mutie.unlock();
 
@@ -23,11 +95,8 @@ std::mutex mutie;
           << "\nCorrect value: '" << randomString << "'" << std::endl
           << "With hash: '" << result << "'\n";
       json j = {
-          {"timestamp", timestamp},
-          {"hash", result},
-          {"data", randomString}
-      };
-      CorrectValues.emplace_back(j);
+          {"timestamp", timestamp}, {"hash", result}, {"data", randomString}};
+      correctValues.emplace_back(j);
     } else {
       BOOST_LOG_SEV(lg, logging::trivial::trace)
           << "\nValue to encode '" << randomString << "'" << std::endl
@@ -35,3 +104,5 @@ std::mutex mutie;
     }
   }
 }
+}
+
