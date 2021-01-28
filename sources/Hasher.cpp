@@ -1,15 +1,49 @@
 // Copyright 2020 Your Name <your_email>
 #include <Hasher.hpp>
 
+std::mutex Console::Hasher::mutie;
 
+Console::Hasher::values Console::Hasher::correctValues;
 
-std::mutex Hasher::mutie;
-Hasher::values Hasher::correctValues;
+po::options_description Console::desc("Allowed options");
+std::string Console::fileName = "jsonLog/log.json";
+size_t Console::threadsCount = boost::thread::hardware_concurrency();
 
-void Hasher::sigHandler(int signum) {
+Console::Console(int argc, char** argv) {
+  desc.add_options()("help,h", "help message")(
+      "output,o", po::value<std::string>(), "Set output .json file. Base value is <logJson/log.json>")(
+      "threads,t", po::value<int>(),
+      "Sets threads count. Base value is <boost::thread::hardware_concurrency>");
+  initiate();
+  po::variables_map vm;
+  po::parsed_options parsed = po::command_line_parser(argc, argv)
+                                  .options(desc)
+                                  .allow_unregistered()
+                                  .run();
+  po::store(parsed, vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    std::cout << "This program is used to generate true hash values\nfrom random data and to write them into the .json file\n"
+    << desc << "\nCOPYRIGHT 2021 LAMP\n";
+    exit(0);
+  }
+
+  if (vm.count("output")) {
+    fileName = vm["output"].as<std::string>();
+  }
+  if (vm.count("threads")) {
+    threadsCount = vm["threads"].as<int>();
+  }
+  std::cout << "Output file: " << fileName
+            << "\nThreads count chosen: " << std::to_string(threadsCount)
+            << "\nStarted encoding...\n";
+}
+
+void Console::Hasher::sigHandler(int signum) {
   json output;
-  const std::string fileName = "jsonLog/log.json";
-  const std::string fieldName = "Correct Values";
+
+  const std::string fieldName = "Encoding stopped\nCorrect Values";
   std::ifstream fileIn(fileName);
 
   if (fileIn) {
@@ -28,11 +62,6 @@ void Hasher::sigHandler(int signum) {
   }
 
   std::ofstream outFile(fileName);
-
-  if (!outFile) {
-    std::cout << "Json Log file not found, creating.....\n";
-    outFile.open(fileName, std::ios::out);
-  }
   outFile << output;
   outFile.close();
 
@@ -41,16 +70,14 @@ void Hasher::sigHandler(int signum) {
     std::cout << correctValue << '\n';
   }
 
-  std::cout << "\nprogram executed with code " << signum << "\n";
+  std::cout << "\nProgram executed with code " << signum << "\n";
   exit(signum);
 }
 
-void Hasher::startHashing() {
+void Console::Hasher::startHashing() {
   logging::add_common_attributes();
 
   src::severity_logger<logging::trivial::severity_level> lg;
-
-  size_t threadsCount = boost::thread::hardware_concurrency();
 
   std::chrono::time_point start = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < threadsCount; ++i) {
@@ -59,7 +86,7 @@ void Hasher::startHashing() {
   }
 }
 
-void Hasher::initiate() {
+void Console::initiate() {
   logging::add_file_log(
       keywords::file_name = "logs/log_%5N.log",
       keywords::rotation_size = 10 * 1024 * 1024,
@@ -70,7 +97,7 @@ void Hasher::initiate() {
   srand(time(nullptr));
 }
 
-[[noreturn]] void Hasher::encode(
+[[noreturn]] void Console::Hasher::encode(
     std::chrono::time_point<std::chrono::system_clock>& start) {
   src::severity_logger<logging::trivial::severity_level> lg;
   while (true) {
