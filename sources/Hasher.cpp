@@ -2,8 +2,9 @@
 #include <Hasher.hpp>
 
 
-std::mutex mutie;
-std::vector<json> correctValues;
+
+std::mutex Hasher::mutie;
+Hasher::values Hasher::correctValues;
 
 void Hasher::sigHandler(int signum) {
   json output;

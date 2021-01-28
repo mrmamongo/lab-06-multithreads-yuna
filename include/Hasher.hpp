@@ -28,6 +28,9 @@ typedef src::severity_logger<logging::trivial::severity_level> logger;
 
 class Hasher {
  private:
+  typedef std::vector<json> values;
+  static values correctValues;
+  static std::mutex mutie;
 
   [[noreturn]] static void encode(
       std::chrono::time_point<std::chrono::system_clock>& start);

@@ -34,12 +34,14 @@ string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
 string(APPEND CMAKE_CXX_FLAGS " -g -std=c++17 -pthread")
 
+
 hunter_add_package(GTest)
 hunter_add_package(Boost COMPONENTS log thread system filesystem)
 hunter_add_package(nlohmann_json)
 
 find_package(GTest REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+
 find_package(Boost COMPONENTS log log_setup thread system filesystem)
 find_package(Threads)
 
