@@ -1,4 +1,4 @@
-// Copyright 2020 Your Name <your_email>
+// Copyright 2020 lamp
 
 #ifndef INCLUDE_HEADER_HPP_
 #define INCLUDE_HEADER_HPP_
@@ -26,21 +26,15 @@ namespace keywords = boost::log::keywords;
 
 typedef src::severity_logger<logging::trivial::severity_level> logger;
 
-
-
-namespace Hasher{
-
-void sigHandler(int signum);
-
 class Hasher {
  private:
-  static void initiate();
+
   [[noreturn]] static void encode(
       std::chrono::time_point<std::chrono::system_clock>& start);
  public:
-  Hasher();
-  void startHashing();
-
+  static void initiate();
+  static void startHashing();
+  static void sigHandler(int signum);
 };
-}
+
 #endif // INCLUDE_HEADER_HPP_

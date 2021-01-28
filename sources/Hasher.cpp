@@ -5,8 +5,7 @@
 std::mutex mutie;
 std::vector<json> correctValues;
 
-namespace Hasher {
-void sigHandler(int signum) {
+void Hasher::sigHandler(int signum) {
   json output;
   const std::string fileName = "jsonLog/log.json";
   const std::string fieldName = "Correct Values";
@@ -66,7 +65,6 @@ void Hasher::initiate() {
       keywords::time_based_rotation =
           sinks::file::rotation_at_time_point(0, 0, 0),
       keywords::format = "[%TimeStamp%][%Severity%][%ThreadID%]: %Message%");
-  // sink->set_filter(logging::trivial::severity >= logging::trivial::info);
 
   srand(time(nullptr));
 }
@@ -98,6 +96,4 @@ void Hasher::initiate() {
           << "With hash: '" << result << "'\n";
     }
   }
-}
-Hasher::Hasher() { initiate(); }
 }

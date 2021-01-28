@@ -2,7 +2,7 @@
 #include "Hasher.hpp"
 
 int main() {
-  Hasher::Hasher hasher;
+  Hasher::initiate();
   signal(SIGINT, Hasher::sigHandler);
-  hasher.startHashing();
+  Hasher::startHashing();
 }
