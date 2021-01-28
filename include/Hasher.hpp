@@ -26,15 +26,21 @@ namespace keywords = boost::log::keywords;
 
 typedef src::severity_logger<logging::trivial::severity_level> logger;
 
-namespace Hasher {
 
 
-   void initiate();
-   void sigHandler(int signum);
+namespace Hasher{
 
-   void startHashing();
-  [[noreturn]] void encode(
+void sigHandler(int signum);
+
+class Hasher {
+ private:
+  static void initiate();
+  [[noreturn]] static void encode(
       std::chrono::time_point<std::chrono::system_clock>& start);
-}
+ public:
+  Hasher();
+  void startHashing();
 
+};
+}
 #endif // INCLUDE_HEADER_HPP_

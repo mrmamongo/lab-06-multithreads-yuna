@@ -3,28 +3,9 @@
 
 
 std::mutex mutie;
-
-namespace Hasher {
-
 std::vector<json> correctValues;
 
-void startHashing(){
-  Hasher::initiate();
-  logging::add_common_attributes();
-
-  src::severity_logger<logging::trivial::severity_level> lg;
-
-  size_t threadsCount = boost::thread::hardware_concurrency();
-
-  std::chrono::time_point start = std::chrono::high_resolution_clock::now();
-  for (size_t i = 0; i < threadsCount; ++i) {
-    auto futures =
-        std::async(std::launch::async, [&start]{
-          Hasher::encode( start);
-        });
-  }
-}
-
+namespace Hasher {
 void sigHandler(int signum) {
   json output;
   const std::string fileName = "jsonLog/log.json";
@@ -38,10 +19,10 @@ void sigHandler(int signum) {
   fileIn.close();
   std::remove(fileName.c_str());
 
-  if (Hasher::correctValues.empty()) {
+  if (correctValues.empty()) {
     std::cout << "There are no correct values! Other ones will be written to logs dir\n";
   } else {
-    for (auto&& value : Hasher::correctValues) {
+    for (auto&& value : correctValues) {
       output[fieldName].emplace_back(value);
     }
   }
@@ -56,7 +37,7 @@ void sigHandler(int signum) {
   outFile.close();
 
   std::cout << "\nRight values:\n";
-  for (auto& correctValue : Hasher::correctValues) {
+  for (auto& correctValue : correctValues) {
     std::cout << correctValue << '\n';
   }
 
@@ -64,7 +45,21 @@ void sigHandler(int signum) {
   exit(signum);
 }
 
-void initiate() {
+void Hasher::startHashing() {
+  logging::add_common_attributes();
+
+  src::severity_logger<logging::trivial::severity_level> lg;
+
+  size_t threadsCount = boost::thread::hardware_concurrency();
+
+  std::chrono::time_point start = std::chrono::high_resolution_clock::now();
+  for (size_t i = 0; i < threadsCount; ++i) {
+    auto futures =
+        std::async(std::launch::async, [&start] { Hasher::Hasher::encode(start); });
+  }
+}
+
+void Hasher::initiate() {
   logging::add_file_log(
       keywords::file_name = "logs/log_%5N.log",
       keywords::rotation_size = 10 * 1024 * 1024,
@@ -76,7 +71,7 @@ void initiate() {
   srand(time(nullptr));
 }
 
-[[noreturn]] void encode(
+[[noreturn]] void Hasher::encode(
     std::chrono::time_point<std::chrono::system_clock>& start) {
   src::severity_logger<logging::trivial::severity_level> lg;
   while (true) {
@@ -104,5 +99,5 @@ void initiate() {
     }
   }
 }
+Hasher::Hasher() { initiate(); }
 }
-
