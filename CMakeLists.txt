@@ -46,27 +46,27 @@ find_package(Boost COMPONENTS log log_setup thread system filesystem program_opt
 find_package(Threads)
 
 
-add_library(${PROJECT_NAME} STATIC
-        ${CMAKE_SOURCE_DIR}/sources/Hasher.cpp
+add_library(hasher STATIC
+        sources/console.cpp sources/hasher.cpp sources/produced_value.cpp sources/thread_safe_queue.cpp
         )
 
-target_include_directories( ${PROJECT_NAME} PUBLIC
+target_include_directories( hasher PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
         )
 
-add_executable(demo
-  ${CMAKE_CURRENT_SOURCE_DIR}/demo/main.cpp
+add_executable( ${PROJECT_NAME}
+  ${CMAKE_CURRENT_SOURCE_DIR}/sources/main.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_include_directories(hasher PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<BUILD_INTERFACE:${Boost_INCLUDE_DIR}>"
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party/PicoSHA2>"
         "$<INSTALL_INTERFACE:include>"
         )
 
-target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json
+target_link_libraries(hasher nlohmann_json::nlohmann_json
         ${Boost_LOG_SETUP_LIBRARY}
         ${Boost_LOG_LIBRARY}
         ${Boost_FILESYSTEM_LIBRARY}
@@ -74,14 +74,13 @@ target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json
         ${Boost_SYSTEM_LIBRARY}
         ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
-target_link_libraries( demo ${PROJECT_NAME} )
+target_link_libraries( ${PROJECT_NAME} hasher )
 
 if(BUILD_TESTS)
   add_executable(tests
-    # TODO: enum your files and delete this comment
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test.cpp
   )
-  target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)
+  target_link_libraries(tests hasher GTest::gtest_main)
   enable_testing()
   add_test(NAME unit_tests COMMAND tests)
 endif()
@@ -108,7 +107,7 @@ endif()
 
 include(CPackConfig.cmake)
 
-install(TARGETS ${PROJECT_NAME} demo
+install(TARGETS ${PROJECT_NAME} hasher
   EXPORT "${PROJECT_NAME}-targets"
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib

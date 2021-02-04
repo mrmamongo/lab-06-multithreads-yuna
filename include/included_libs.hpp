@@ -1,14 +1,15 @@
-// Copyright 2020 lamp
+//
+// Created by lamp on 04.02.2021.
+//
 
-#ifndef INCLUDE_HEADER_HPP_
-#define INCLUDE_HEADER_HPP_
+#ifndef THREADING_INCLUDED_LIBS_HPP_
+#define THREADING_INCLUDED_LIBS_HPP_
 
-#include <mutex>
-#include <boost/log/trivial.hpp>
-#include "../third-party/PicoSHA2/picosha2.h"
-#include <csignal>
+#include <boost/filesystem.hpp>
 #include <future>
-#include <boost/thread.hpp>
+#include <mutex>
+#include <picosha2.h>
+#include <boost/log/trivial.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -20,8 +21,11 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <any>
 #include <nlohmann/json.hpp>
+
 using json = nlohmann::json;
+
 namespace logging = boost::log;
 namespace src = boost::log::sources;
 namespace sinks = boost::log::sinks;
@@ -30,26 +34,4 @@ namespace po = boost::program_options;
 
 typedef src::severity_logger<logging::trivial::severity_level> logger;
 
-class Console {
-  static po::options_description desc;
-  static void initiate();
-  static std::string fileName;
-  static size_t threadsCount;
- public:
-  Console(int, char**);
-  class Hasher {
-   private:
-    typedef std::vector<json> values;
-    static values correctValues;
-    static std::mutex mutie;
-
-    [[noreturn]] static void encode(
-        std::chrono::time_point<std::chrono::system_clock>& start);
-   public:
-
-    static void startHashing();
-    static void sigHandler(int signum);
-  };
-};
-
-#endif // INCLUDE_HEADER_HPP_
+#endif  // THREADING_INCLUDED_LIBS_HPP_
