@@ -31,16 +31,13 @@ namespace po = boost::program_options;
 typedef src::severity_logger<logging::trivial::severity_level> logger;
 
 class Console {
+ private:
   static po::options_description desc;
-  static void initiate();
   static std::string fileName;
   static size_t threadsCount;
- public:
-  Console(int, char**);
   class Hasher {
    private:
-    typedef std::vector<json> values;
-    static values correctValues;
+    static std::vector<json> correctValues;
     static std::mutex mutie;
 
     [[noreturn]] static void encode(
@@ -50,6 +47,10 @@ class Console {
     static void startHashing();
     static void sigHandler(int signum);
   };
+ public:
+  static int wmain(const po::variables_map& vm);
+  Console();
+  po::options_description& getDesc(){ return desc; }
 };
 
 #endif // INCLUDE_HEADER_HPP_

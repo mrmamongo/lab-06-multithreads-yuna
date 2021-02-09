@@ -3,41 +3,43 @@
 
 std::mutex Console::Hasher::mutie;
 
-Console::Hasher::values Console::Hasher::correctValues;
+std::vector<json> Console::Hasher::correctValues;
 
-po::options_description Console::desc("Allowed options");
-std::string Console::fileName = "jsonLog/log.json";
-size_t Console::threadsCount = boost::thread::hardware_concurrency();
+std::string Console::fileName;
+size_t Console::threadsCount;
 
-Console::Console(int argc, char** argv) {
+Console::Console() {
   desc.add_options()("help,h", "help message")(
       "output,o", po::value<std::string>(), "Set output .json file. Base value is <logJson/log.json>")(
       "threads,t", po::value<int>(),
-      "Sets threads count. Base value is <boost::thread::hardware_concurrency>");
-  initiate();
-  po::variables_map vm;
-  po::parsed_options parsed = po::command_line_parser(argc, argv)
-                                  .options(desc)
-                                  .allow_unregistered()
-                                  .run();
-  po::store(parsed, vm);
-  po::notify(vm);
+      "Sets threads count. Base value is <boost::thread::hardware_concurrency>")
+      ("times,t", po::value<int>(), "<NOT WORKING> Sets number of true values, if you want to stop at a specific moment");
 
+}
+
+
+int Console::wmain(const po::variables_map& vm) {
   if (vm.count("help")) {
     std::cout << "This program is used to generate true hash values\nfrom random data and to write them into the .json file\n"
-    << desc << "\nCOPYRIGHT 2021 LAMP\n";
+              << desc << "\nCOPYRIGHT 2021 LAMP\n";
     exit(0);
   }
-
+  fileName = "jsonLog/log.json";
+  threadsCount = std::thread::hardware_concurrency();
   if (vm.count("output")) {
     fileName = vm["output"].as<std::string>();
   }
   if (vm.count("threads")) {
     threadsCount = vm["threads"].as<int>();
   }
+
   std::cout << "Output file: " << fileName
             << "\nThreads count chosen: " << std::to_string(threadsCount)
             << "\nStarted encoding...\n";
+
+  signal(SIGINT, Console::Hasher::sigHandler);
+  Console::Hasher::startHashing();
+  return 0;
 }
 
 void Console::Hasher::sigHandler(int signum) {
@@ -77,8 +79,6 @@ void Console::Hasher::sigHandler(int signum) {
 void Console::Hasher::startHashing() {
   logging::add_common_attributes();
 
-  src::severity_logger<logging::trivial::severity_level> lg;
-
   std::chrono::time_point start = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < threadsCount; ++i) {
     auto futures =
@@ -86,20 +86,10 @@ void Console::Hasher::startHashing() {
   }
 }
 
-void Console::initiate() {
-  logging::add_file_log(
-      keywords::file_name = "logs/log_%5N.log",
-      keywords::rotation_size = 10 * 1024 * 1024,
-      keywords::time_based_rotation =
-          sinks::file::rotation_at_time_point(0, 0, 0),
-      keywords::format = "[%TimeStamp%][%Severity%][%ThreadID%]: %Message%");
-
-  srand(time(nullptr));
-}
 
 [[noreturn]] void Console::Hasher::encode(
     std::chrono::time_point<std::chrono::system_clock>& start) {
-  src::severity_logger<logging::trivial::severity_level> lg;
+  logger lg;
   while (true) {
     const std::string hashEnd = "0000";
     std::string randomString = std::to_string(rand());
