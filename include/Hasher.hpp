@@ -50,7 +50,7 @@ class Console {
  public:
   static int wmain(const po::variables_map& vm);
   Console();
-  po::options_description& getDesc(){ return desc; }
+  po::options_description& getDesc() const{ return desc; }
 };
 
 #endif // INCLUDE_HEADER_HPP_
